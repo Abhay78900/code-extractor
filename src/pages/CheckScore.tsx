@@ -14,9 +14,12 @@ export default function CheckScore() {
   const handleSubmit = async (data: any) => {
     setIsLoading(true);
     try {
+      // Save form data for next step
       sessionStorage.setItem('creditCheckFormData', JSON.stringify(data));
-      toast.success('Form submitted successfully! Redirecting to dashboard...');
-      navigate(createPageUrl('Dashboard'));
+      sessionStorage.setItem('pendingRegistration', 'true');
+      
+      // Redirect to report selection
+      navigate(createPageUrl('SelectReports'));
     } catch (e) {
       toast.error('Something went wrong. Please try again.');
     } finally {
