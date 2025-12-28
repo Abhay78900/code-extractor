@@ -1,6 +1,7 @@
 // Page URL mapping for navigation
 const pageRoutes: Record<string, string> = {
   Home: '/',
+  Login: '/login',
   Dashboard: '/dashboard',
   CheckScore: '/check-score',
   SelectReports: '/select-reports',
@@ -23,6 +24,7 @@ const pageRoutes: Record<string, string> = {
   PartnerDashboard: '/partner/dashboard',
   PartnerReports: '/partner/reports',
   PartnerClients: '/partner/clients',
+  PartnerWallet: '/partner/wallet',
   PartnerMarketing: '/partner/marketing',
   AuthRedirect: '/auth-redirect',
 };
