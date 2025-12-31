@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Partner } from '@/types';
 
 interface PartnerSidebarProps {
-  currentPage: string;
+  currentPage?: string;
   onLogout: () => void;
   partner?: Partner;
 }
