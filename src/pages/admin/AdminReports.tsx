@@ -143,9 +143,13 @@ export default function AdminReports() {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          {report.bureaus_checked.map(bureau => (
-                            <span key={bureau} className="text-lg" title={bureauConfig[bureau as keyof typeof bureauConfig]?.name}>
-                              {bureauConfig[bureau as keyof typeof bureauConfig]?.logo}
+                          {Object.entries(bureauConfig).filter(([key]) => 
+                            report.bureaus_checked.some((b: string) => 
+                              b.toLowerCase().includes(key) || key.includes(b.toLowerCase().split(' ')[0])
+                            )
+                          ).map(([key, config]) => (
+                            <span key={key} className="text-lg" title={config.name}>
+                              {config.logo}
                             </span>
                           ))}
                         </div>
@@ -178,7 +182,7 @@ export default function AdminReports() {
           report={selectedReport}
           isOpen={!!selectedReport}
           onClose={() => setSelectedReport(null)}
-          bureauName="TransUnion CIBIL"
+          referrer="admin"
         />
       </main>
     </div>

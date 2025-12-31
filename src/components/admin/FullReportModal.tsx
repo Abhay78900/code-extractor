@@ -1,4 +1,5 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -7,15 +8,20 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Download, Printer, X } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Download, Printer, ExternalLink } from 'lucide-react';
 import { CreditReport } from '@/types';
 import FullCreditReportView from '@/components/credit/FullCreditReportView';
+import { bureauConfig } from '@/data/mockData';
+import { getBureauScore, isBureauPurchased } from '@/utils/bureauMapping';
+import { createPageUrl } from '@/utils';
 
 interface FullReportModalProps {
   report: CreditReport | null;
   isOpen: boolean;
   onClose: () => void;
   bureauName?: string;
+  referrer?: 'admin' | 'partner';
 }
 
 export default function FullReportModal({
@@ -23,10 +29,28 @@ export default function FullReportModal({
   isOpen,
   onClose,
   bureauName = 'TransUnion CIBIL',
+  referrer = 'admin',
 }: FullReportModalProps) {
+  const navigate = useNavigate();
   const printRef = useRef<HTMLDivElement>(null);
+  const [selectedBureau, setSelectedBureau] = useState('cibil');
+
+  // Get purchased bureaus for this report
+  const purchasedBureaus = report 
+    ? Object.keys(bureauConfig).filter(bureau => isBureauPurchased(report, bureau))
+    : [];
+
+  // Set initial bureau when report changes
+  useEffect(() => {
+    if (report && purchasedBureaus.length > 0) {
+      setSelectedBureau(purchasedBureaus[0]);
+    }
+  }, [report?.id]);
 
   if (!report) return null;
+
+  const currentBureauConfig = bureauConfig[selectedBureau];
+  const currentScore = getBureauScore(report, selectedBureau);
 
   const handlePrint = () => {
     const content = printRef.current;
@@ -39,7 +63,7 @@ export default function FullReportModal({
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Credit Report - ${report.full_name}</title>
+          <title>Credit Report - ${report.full_name} - ${currentBureauConfig?.fullName || bureauName}</title>
           <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
             body { font-family: system-ui, -apple-system, sans-serif; padding: 20px; }
@@ -91,10 +115,10 @@ export default function FullReportModal({
   const handleDownload = () => {
     const reportData = {
       header: {
-        bureau_name: bureauName,
+        bureau_name: currentBureauConfig?.fullName || bureauName,
         report_date: report.report_generated_at || report.created_date,
         control_number: Math.floor(Math.random() * 9000000000) + 1000000000,
-        credit_score: report.average_score,
+        credit_score: currentScore,
       },
       personal_information: {
         full_name: report.full_name,
@@ -141,17 +165,28 @@ export default function FullReportModal({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `credit_report_${report.pan_number}_${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `credit_report_${report.pan_number}_${selectedBureau.toUpperCase()}_${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleOpenFullPage = () => {
+    onClose();
+    navigate(`${createPageUrl('CreditReport')}?reportId=${report.id}&ref=${referrer}`);
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-5xl max-h-[95vh] p-0">
         <DialogHeader className="p-4 border-b flex flex-row items-center justify-between">
-          <DialogTitle>Credit Report - {report.full_name}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            Credit Report - {report.full_name}
+            <span className="text-sm font-normal text-muted-foreground">({report.pan_number})</span>
+          </DialogTitle>
           <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={handleOpenFullPage} title="Open in Full Page">
+              <ExternalLink className="w-4 h-4" />
+            </Button>
             <Button variant="outline" size="sm" onClick={handleDownload}>
               <Download className="w-4 h-4 mr-1" /> JSON
             </Button>
@@ -160,9 +195,38 @@ export default function FullReportModal({
             </Button>
           </div>
         </DialogHeader>
-        <ScrollArea className="max-h-[calc(95vh-80px)]">
+
+        {/* Bureau Tabs - Only show if multiple bureaus purchased */}
+        {purchasedBureaus.length > 1 && (
+          <div className="px-4 pt-4">
+            <Tabs value={selectedBureau} onValueChange={setSelectedBureau}>
+              <TabsList className="grid bg-muted" style={{ gridTemplateColumns: `repeat(${purchasedBureaus.length}, 1fr)` }}>
+                {purchasedBureaus.map((key) => {
+                  const config = bureauConfig[key];
+                  const score = getBureauScore(report, key);
+                  return (
+                    <TabsTrigger 
+                      key={key} 
+                      value={key}
+                      className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                    >
+                      <span>{config.logo}</span>
+                      <span className="hidden sm:inline">{config.name}</span>
+                      <span className="font-bold">{score}</span>
+                    </TabsTrigger>
+                  );
+                })}
+              </TabsList>
+            </Tabs>
+          </div>
+        )}
+
+        <ScrollArea className="max-h-[calc(95vh-140px)]">
           <div className="p-6" ref={printRef}>
-            <FullCreditReportView report={report} bureauName={bureauName} />
+            <FullCreditReportView 
+              report={report} 
+              bureauName={currentBureauConfig?.fullName || bureauName} 
+            />
           </div>
         </ScrollArea>
       </DialogContent>
