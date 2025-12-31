@@ -197,7 +197,7 @@ export default function PartnerReports() {
           report={selectedReport}
           isOpen={!!selectedReport}
           onClose={() => setSelectedReport(null)}
-          bureauName="TransUnion CIBIL"
+          referrer="partner"
         />
       </main>
     </div>
