@@ -177,6 +177,7 @@ export default function AdminReports() {
         {selectedReport && (
           <ReportDetailModal
             report={selectedReport}
+            isOpen={!!selectedReport}
             onClose={() => setSelectedReport(null)}
           />
         )}
