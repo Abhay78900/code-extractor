@@ -17,7 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 
 interface MasterAdminSidebarProps {
-  currentPage: string;
+  currentPage?: string;
   onLogout: () => void;
 }
 
