@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import MasterAdminSidebar from '@/components/admin/MasterAdminSidebar';
-import ReportDetailModal from '@/components/admin/ReportDetailModal';
+import FullReportModal from '@/components/admin/FullReportModal';
 import { mockCreditReports, bureauConfig } from '@/data/mockData';
 import { CreditReport } from '@/types';
 
@@ -174,13 +174,12 @@ export default function AdminReports() {
           </Card>
         </motion.div>
 
-        {selectedReport && (
-          <ReportDetailModal
-            report={selectedReport}
-            isOpen={!!selectedReport}
-            onClose={() => setSelectedReport(null)}
-          />
-        )}
+        <FullReportModal
+          report={selectedReport}
+          isOpen={!!selectedReport}
+          onClose={() => setSelectedReport(null)}
+          bureauName="TransUnion CIBIL"
+        />
       </main>
     </div>
   );

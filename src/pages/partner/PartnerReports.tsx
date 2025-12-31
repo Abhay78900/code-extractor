@@ -7,16 +7,19 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PartnerSidebar from '@/components/partner/PartnerSidebar';
-import PartnerReportHistory from '@/components/partner/PartnerReportHistory';
+import FullReportModal from '@/components/admin/FullReportModal';
 import { mockCreditReports, bureauConfig } from '@/data/mockData';
+import { CreditReport } from '@/types';
 
 export default function PartnerReports() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [bureauFilter, setBureauFilter] = useState('all');
+  const [selectedReport, setSelectedReport] = useState<CreditReport | null>(null);
 
   const partnerReports = mockCreditReports.filter(r => r.initiated_by === 'partner');
 
@@ -32,6 +35,12 @@ export default function PartnerReports() {
   const handleLogout = () => {
     sessionStorage.clear();
     navigate(createPageUrl('Home'));
+  };
+
+  const getScoreColor = (score: number) => {
+    if (score >= 750) return 'text-accent';
+    if (score >= 650) return 'text-amber-500';
+    return 'text-destructive';
   };
 
   return (
@@ -122,13 +131,74 @@ export default function PartnerReports() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <PartnerReportHistory 
-                reports={filteredReports} 
-                onViewReport={(reportId) => navigate(createPageUrl('CreditReport') + `?reportId=${reportId}`)}
-              />
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Report ID</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>PAN</TableHead>
+                    <TableHead>Score</TableHead>
+                    <TableHead>Bureaus</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredReports.map((report) => (
+                    <TableRow key={report.id}>
+                      <TableCell className="font-mono text-sm">{report.id}</TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium text-foreground">{report.full_name}</p>
+                          <p className="text-sm text-muted-foreground">{report.user_email}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>{report.pan_number}</TableCell>
+                      <TableCell>
+                        <span className={`font-bold ${getScoreColor(report.average_score)}`}>
+                          {report.average_score}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          {report.bureaus_checked.slice(0, 4).map((bureau, idx) => (
+                            <span key={idx} className="text-lg" title={bureau}>
+                              {bureauConfig[bureau.toLowerCase().split(' ')[0] as keyof typeof bureauConfig]?.logo || '📊'}
+                            </span>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell>{new Date(report.created_date).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <Badge variant={report.report_status === 'UNLOCKED' ? 'default' : 'secondary'}>
+                          {report.report_status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedReport(report)}
+                        >
+                          <Eye className="w-4 h-4 mr-1" />
+                          View
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
         </motion.div>
+
+        <FullReportModal
+          report={selectedReport}
+          isOpen={!!selectedReport}
+          onClose={() => setSelectedReport(null)}
+          bureauName="TransUnion CIBIL"
+        />
       </main>
     </div>
   );
