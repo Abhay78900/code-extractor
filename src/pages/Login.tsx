@@ -18,18 +18,15 @@ import {
   Shield
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { setCurrentUserRole } from '@/data/mockData';
-
-const demoCredentials = [
-  { role: 'USER', email: 'john.doe@example.com', password: 'demo123', label: 'User', icon: User },
-  { role: 'PARTNER_ADMIN', email: 'partner@example.com', password: 'demo123', label: 'Partner', icon: Building2 },
-  { role: 'MASTER_ADMIN', email: 'admin@creditcheck.com', password: 'demo123', label: 'Admin', icon: Shield },
-];
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Login() {
   const navigate = useNavigate();
+  const { signIn, signUp, loading: authLoading } = useAuth();
+  const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -37,35 +34,40 @@ export default function Login() {
     e.preventDefault();
     setIsLoading(true);
 
-    // Demo login logic
-    const matchedUser = demoCredentials.find(
-      cred => cred.email.toLowerCase() === email.toLowerCase() && cred.password === password
-    );
+    const { error } = await signIn(email, password);
 
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    if (matchedUser) {
-      setCurrentUserRole(matchedUser.role as any);
-      toast.success(`Welcome back! Logged in as ${matchedUser.label}`);
-      
-      if (matchedUser.role === 'MASTER_ADMIN') {
-        navigate('/admin/dashboard');
-      } else if (matchedUser.role === 'PARTNER_ADMIN') {
-        navigate('/partner/dashboard');
-      } else {
-        navigate('/dashboard');
-      }
-    } else {
-      toast.error('Invalid email or password. Try one of the demo credentials below.');
+    if (error) {
+      toast.error(error.message || 'Invalid email or password');
+      setIsLoading(false);
+      return;
     }
 
+    toast.success('Welcome back!');
+    navigate('/dashboard');
     setIsLoading(false);
   };
 
-  const handleDemoLogin = (cred: typeof demoCredentials[0]) => {
-    setEmail(cred.email);
-    setPassword(cred.password);
-    toast.info(`Demo credentials filled. Click Login to proceed.`);
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    if (!fullName.trim()) {
+      toast.error('Please enter your full name');
+      setIsLoading(false);
+      return;
+    }
+
+    const { error } = await signUp(email, password, fullName);
+
+    if (error) {
+      toast.error(error.message || 'Failed to create account');
+      setIsLoading(false);
+      return;
+    }
+
+    toast.success('Account created successfully!');
+    navigate('/dashboard');
+    setIsLoading(false);
   };
 
   return (
@@ -134,86 +136,139 @@ export default function Login() {
 
             <Card className="border-0 shadow-lg">
               <CardHeader className="space-y-1">
-                <CardTitle className="text-2xl font-display">Sign In</CardTitle>
-                <CardDescription>
-                  Enter your credentials to access your account
-                </CardDescription>
+                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'login' | 'signup')}>
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="login">Sign In</TabsTrigger>
+                    <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                  </TabsList>
+                </Tabs>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="Enter your email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10"
-                        required
-                      />
+                {activeTab === 'login' ? (
+                  <form onSubmit={handleLogin} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          id="email"
+                          type="email"
+                          placeholder="Enter your email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="pl-10"
+                          required
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="password"
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="Enter your password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="pl-10 pr-10"
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
-                    {isLoading ? 'Signing in...' : 'Sign In'}
-                  </Button>
-                </form>
-
-                {/* Demo Credentials */}
-                <div className="mt-8">
-                  <p className="text-sm text-center text-muted-foreground mb-4">
-                    Try demo credentials
-                  </p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {demoCredentials.map((cred) => {
-                      const Icon = cred.icon;
-                      return (
-                        <Button
-                          key={cred.role}
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDemoLogin(cred)}
-                          className="flex-col h-auto py-3 gap-1"
+                    <div className="space-y-2">
+                      <Label htmlFor="password">Password</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          id="password"
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder="Enter your password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="pl-10 pr-10"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                         >
-                          <Icon className="w-5 h-5" />
-                          <span className="text-xs">{cred.label}</span>
-                        </Button>
-                      );
-                    })}
-                  </div>
-                </div>
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <Button type="submit" className="w-full" size="lg" disabled={isLoading || authLoading}>
+                      {isLoading ? 'Signing in...' : 'Sign In'}
+                    </Button>
+                  </form>
+                ) : (
+                  <form onSubmit={handleSignUp} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="fullName">Full Name</Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          id="fullName"
+                          type="text"
+                          placeholder="Enter your full name"
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          className="pl-10"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="signupEmail">Email</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          id="signupEmail"
+                          type="email"
+                          placeholder="Enter your email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="pl-10"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="signupPassword">Password</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          id="signupPassword"
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder="Create a password (min 6 characters)"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="pl-10 pr-10"
+                          minLength={6}
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <Button type="submit" className="w-full" size="lg" disabled={isLoading || authLoading}>
+                      {isLoading ? 'Creating account...' : 'Create Account'}
+                    </Button>
+                  </form>
+                )}
 
                 <p className="text-sm text-center text-muted-foreground mt-6">
-                  Don't have an account?{' '}
-                  <Button variant="link" className="p-0 h-auto" onClick={() => navigate('/check-score')}>
-                    Check your credit score
-                  </Button>
+                  {activeTab === 'login' ? (
+                    <>
+                      Don't have an account?{' '}
+                      <Button variant="link" className="p-0 h-auto" onClick={() => setActiveTab('signup')}>
+                        Sign up
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      Already have an account?{' '}
+                      <Button variant="link" className="p-0 h-auto" onClick={() => setActiveTab('login')}>
+                        Sign in
+                      </Button>
+                    </>
+                  )}
                 </p>
               </CardContent>
             </Card>

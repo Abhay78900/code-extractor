@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/hooks/useAuth";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import CheckScore from "./pages/CheckScore";
@@ -29,50 +30,52 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/check-score" element={<CheckScore />} />
-          <Route path="/select-reports" element={<SelectReports />} />
-          <Route path="/payment" element={<PaymentGateway />} />
-          <Route path="/auth-redirect" element={<AuthRedirect />} />
-          
-          {/* User Routes */}
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/credit-report" element={<CreditReport />} />
-          <Route path="/unlock-report" element={<UnlockReport />} />
-          
-          {/* Admin Routes */}
-          <Route path="/admin/dashboard" element={<MasterAdminDashboard />} />
-          <Route path="/admin/analytics" element={<AdminAnalytics />} />
-          <Route path="/admin/reports-repository" element={<AdminReports />} />
-          <Route path="/admin/users" element={<AdminUsers />} />
-          <Route path="/admin/user-roles" element={<AdminUsers />} />
-          <Route path="/admin/partners" element={<ManagePartners />} />
-          <Route path="/admin/partner-wallets" element={<ManagePartners />} />
-          <Route path="/admin/transactions" element={<MasterAdminDashboard />} />
-          <Route path="/admin/score-repair" element={<MasterAdminDashboard />} />
-          <Route path="/admin/settings" element={<AdminSettings />} />
-          <Route path="/admin/*" element={<MasterAdminDashboard />} />
-          
-          {/* Partner Routes */}
-          <Route path="/partner/dashboard" element={<PartnerDashboard />} />
-          <Route path="/partner/reports" element={<PartnerReports />} />
-          <Route path="/partner/clients" element={<PartnerClients />} />
-          <Route path="/partner/wallet" element={<PartnerWalletManagement />} />
-          <Route path="/partner/marketing" element={<PartnerMarketing />} />
-          <Route path="/partner/*" element={<PartnerDashboard />} />
-          
-          {/* 404 */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/check-score" element={<CheckScore />} />
+            <Route path="/select-reports" element={<SelectReports />} />
+            <Route path="/payment" element={<PaymentGateway />} />
+            <Route path="/auth-redirect" element={<AuthRedirect />} />
+            
+            {/* User Routes */}
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/credit-report" element={<CreditReport />} />
+            <Route path="/unlock-report" element={<UnlockReport />} />
+            
+            {/* Admin Routes */}
+            <Route path="/admin/dashboard" element={<MasterAdminDashboard />} />
+            <Route path="/admin/analytics" element={<AdminAnalytics />} />
+            <Route path="/admin/reports-repository" element={<AdminReports />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/user-roles" element={<AdminUsers />} />
+            <Route path="/admin/partners" element={<ManagePartners />} />
+            <Route path="/admin/partner-wallets" element={<ManagePartners />} />
+            <Route path="/admin/transactions" element={<MasterAdminDashboard />} />
+            <Route path="/admin/score-repair" element={<MasterAdminDashboard />} />
+            <Route path="/admin/settings" element={<AdminSettings />} />
+            <Route path="/admin/*" element={<MasterAdminDashboard />} />
+            
+            {/* Partner Routes */}
+            <Route path="/partner/dashboard" element={<PartnerDashboard />} />
+            <Route path="/partner/reports" element={<PartnerReports />} />
+            <Route path="/partner/clients" element={<PartnerClients />} />
+            <Route path="/partner/wallet" element={<PartnerWalletManagement />} />
+            <Route path="/partner/marketing" element={<PartnerMarketing />} />
+            <Route path="/partner/*" element={<PartnerDashboard />} />
+            
+            {/* 404 */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
