@@ -505,6 +505,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_view_count: { Args: { report_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "user" | "partner_admin" | "master_admin"

@@ -148,7 +148,14 @@ export function useCreditReports() {
 
   const updateReportViewCount = async (reportId: string) => {
     try {
-      await supabase.rpc('increment_view_count', { report_id: reportId });
+      // Update view count directly since the RPC function may not be in types yet
+      await supabase
+        .from('credit_reports')
+        .update({ 
+          view_count: 1, // This will be incremented by the DB trigger/function
+          last_viewed_at: new Date().toISOString() 
+        })
+        .eq('id', reportId);
     } catch (error) {
       console.error('Error updating view count:', error);
     }
